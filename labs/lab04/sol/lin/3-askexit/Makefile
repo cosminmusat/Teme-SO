@@ -1,1 +1,0 @@
-../../../skel/lin/3-askexit/Makefile
