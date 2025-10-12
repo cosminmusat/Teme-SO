@@ -1,1 +1,0 @@
-../../../skel/lin/10-spin/Makefile

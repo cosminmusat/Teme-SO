@@ -1,1 +1,0 @@
-../../../skel/lin/6-timer/Makefile

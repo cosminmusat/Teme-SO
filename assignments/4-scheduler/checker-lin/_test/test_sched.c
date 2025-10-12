@@ -32,6 +32,8 @@ void test_sched_01(void)
 test:
 	so_end();
 
+	fprintf(stderr, "int_test = %d\n", integrity_test);
+
 	basic_test(integrity_test == SO_TEST_SUCCESS);
 }
 
@@ -62,6 +64,9 @@ void test_sched_02(void)
 test:
 	so_end();
 
+	fprintf(stderr, "ret = %d\n", ret);
+
+
 	basic_test(ret == 0);
 }
 
@@ -87,6 +92,9 @@ void test_sched_03(void)
 test:
 	so_end();
 
+	fprintf(stderr, "ret = %d\n", ret);
+
+
 	basic_test(ret == 0);
 }
 
@@ -104,6 +112,8 @@ void test_sched_04(void)
 		goto test;
 	}
 
+	fprintf(stderr, "hello 4\n");
+
 	/* clean the previous init */
 	so_end();
 
@@ -114,6 +124,8 @@ void test_sched_04(void)
 
 test:
 	so_end();
+
+	fprintf(stderr, "ret = %d\n", ret);
 
 	basic_test(ret == 0);
 }

@@ -1,1 +1,0 @@
-../../../skel/lin/5-prot/Makefile

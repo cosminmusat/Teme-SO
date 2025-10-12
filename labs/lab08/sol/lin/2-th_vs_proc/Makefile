@@ -1,1 +1,0 @@
-../../../skel/lin/2-th_vs_proc/Makefile

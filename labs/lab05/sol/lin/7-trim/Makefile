@@ -1,1 +1,0 @@
-../../../skel/lin/7-trim/Makefile

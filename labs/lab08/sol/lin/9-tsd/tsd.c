@@ -1,1 +1,0 @@
-../../../skel/lin/9-tsd/tsd.c

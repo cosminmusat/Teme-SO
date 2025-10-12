@@ -1,1 +1,0 @@
-../../../skel/lin/3-funny_sem/Makefile

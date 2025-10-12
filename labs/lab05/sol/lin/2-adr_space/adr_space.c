@@ -1,1 +1,0 @@
-../../../skel/lin/2-adr_space/adr_space.c
