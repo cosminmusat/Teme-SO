@@ -32,8 +32,6 @@ void test_sched_01(void)
 test:
 	so_end();
 
-	fprintf(stderr, "int_test = %d\n", integrity_test);
-
 	basic_test(integrity_test == SO_TEST_SUCCESS);
 }
 
@@ -64,9 +62,6 @@ void test_sched_02(void)
 test:
 	so_end();
 
-	fprintf(stderr, "ret = %d\n", ret);
-
-
 	basic_test(ret == 0);
 }
 
@@ -92,9 +87,6 @@ void test_sched_03(void)
 test:
 	so_end();
 
-	fprintf(stderr, "ret = %d\n", ret);
-
-
 	basic_test(ret == 0);
 }
 
@@ -112,8 +104,6 @@ void test_sched_04(void)
 		goto test;
 	}
 
-	fprintf(stderr, "hello 4\n");
-
 	/* clean the previous init */
 	so_end();
 
@@ -124,8 +114,6 @@ void test_sched_04(void)
 
 test:
 	so_end();
-
-	fprintf(stderr, "ret = %d\n", ret);
 
 	basic_test(ret == 0);
 }
@@ -199,6 +187,7 @@ static unsigned int test_sched_fork_executed;
 static void test_sched_handler_07(unsigned int prio)
 {
 	test_sched_fork_executed = 1;
+	fprintf(stderr, "test 7 done\n");
 }
 
 void test_sched_07(void)
@@ -290,6 +279,12 @@ test:
 				!equal_tids(new_tid, local_tid) &&
 				!this_tid(new_tid) &&
 				equal_tids(new_tid, test_fork_tid));
+	
+	fprintf(stderr, "test 9 result: %d\n", !equal_tids(new_tid, INVALID_TID) &&
+				!equal_tids(test_fork_tid, INVALID_TID) &&
+				!equal_tids(new_tid, local_tid) &&
+				!this_tid(new_tid) &&
+				equal_tids(new_tid, test_fork_tid));
 }
 
 /*
@@ -329,6 +324,9 @@ test:
 	so_end();
 
 	basic_test(test_sched_fork_handler_runs == test_sched_fork_runs);
+
+	fprintf(stderr, "handler runs: %u, forks: %u\n",
+		test_sched_fork_handler_runs, test_sched_fork_runs);
 }
 
 /*
@@ -380,6 +378,13 @@ void test_sched_11(void)
 	so_end();
 
 	if (test_fork_execution_status == SO_TEST_SUCCESS) {
+
+		for (i = 0; i <= test_fork_rand_tests; i++) {
+			fprintf(stderr, "exec tid[%u] = %lu, fork tid[%u] = %lu\n",
+				i, test_fork_exec_tids[i],
+				i, test_fork_tids[i]);
+		}
+
 		/* check threads order */
 		for (i = 0; i <= test_fork_rand_tests; i++) {
 			if (!equal_tids(test_fork_exec_tids[i],

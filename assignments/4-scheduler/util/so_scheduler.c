@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 #include "types.h"
 
 static scheduler* sch = NULL;
+static pthread_mutex_t sch_mutex;
+static pthread_cond_t all_threads_terminated;
 
 DECL_PREFIX int so_init(unsigned int time_quantum, unsigned int io) {
     if (time_quantum == 0) {
@@ -25,18 +28,53 @@ DECL_PREFIX int so_init(unsigned int time_quantum, unsigned int io) {
 
     sch->time_quantum = time_quantum;
     sch->io = io;
+    sch->no_threads = 0;
+    sch->no_terminated_threads = 0;
+    pthread_mutex_init(&sch_mutex, NULL);
+    pthread_cond_init(&all_threads_terminated, NULL);
 
     return 0;
 }
 
+void* thread_function(void* arg) {
+    thread* tr = (thread*)arg;
+    unsigned int priority = tr->priority;
+    fprintf(stderr, "Thread with priority %u started\n", priority);
+    tr->tid = pthread_self();
+    tr->func(priority);
+
+    pthread_mutex_lock(&sch_mutex);
+    sch->terminated_threads[sch->no_terminated_threads++] = tr;
+    pthread_cond_signal(&all_threads_terminated);
+    pthread_mutex_unlock(&sch_mutex);
+
+    return NULL;
+}
+
 DECL_PREFIX tid_t so_fork(so_handler *func, unsigned int priority) {
-    // pthread_attr_t thread_attr;
-    // pthread_attr_init(&thread_attr);
-    // pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
-    // pthread_t thread;
-    // tid_t thread_id = pthread_create(&thread, NULL, func, &priority);
-    // return thread_id;
-    return 0;
+    if (func == 0) {
+        return INVALID_TID;
+    }
+
+    if (priority > SO_MAX_PRIO) {
+        return INVALID_TID;
+    }
+
+    // fprintf(stderr, "Forking thread with priority %u\n", priority);
+
+    thread* tr = malloc(sizeof(thread));
+    tr->time_quantum = sch->time_quantum;
+    tr->priority = priority;
+    tr->func = func;
+
+    pthread_t ptr;
+    pthread_mutex_lock(&sch_mutex);
+    sch->no_threads++;
+    pthread_mutex_unlock(&sch_mutex);
+
+    pthread_create(&ptr, NULL, thread_function, tr);
+
+    return ptr;
 }
 
 DECL_PREFIX int so_wait(unsigned int io) {
@@ -52,10 +90,26 @@ DECL_PREFIX void so_exec(void) {
 }
 
 DECL_PREFIX void so_end(void) {
-    if (sch != NULL) {
-        free(sch);
-        sch = NULL;
+    if (sch == NULL) {
+        return;
     }
+    
+    pthread_mutex_lock(&sch_mutex);
+    while (sch->no_threads - sch->no_terminated_threads > 0) {
+        pthread_cond_wait(&all_threads_terminated, &sch_mutex);
+    }
+    pthread_mutex_unlock(&sch_mutex);
+
+    for (unsigned int i = 0; i < sch->no_threads; i++) {
+        pthread_join(sch->terminated_threads[i]->tid, NULL);
+        free(sch->terminated_threads[i]);
+    }
+
+    free(sch);
+    sch = NULL;
+
+    pthread_mutex_destroy(&sch_mutex);
+    pthread_cond_destroy(&all_threads_terminated);
 
     return;
 }
