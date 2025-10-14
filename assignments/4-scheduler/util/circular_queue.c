@@ -78,3 +78,11 @@ void* front(C_Queue* q)
 
     return q->elem[q->front];
 }
+
+void* rear(C_Queue* q)
+{
+    if (is_empty(q)) {
+        return NULL;
+    }
+    return q->elem[q->rear];
+}

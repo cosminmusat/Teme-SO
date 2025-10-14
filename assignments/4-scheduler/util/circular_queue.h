@@ -15,3 +15,5 @@ void enqueue(C_Queue* q, void* data);
 void* dequeue(C_Queue* q);
 
 void* front(C_Queue* q);
+
+void* rear(C_Queue* q);
