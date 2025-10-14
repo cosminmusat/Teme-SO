@@ -1,0 +1,28 @@
+// ...existing code...
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug run_test with LD_LIBRARY_PATH",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/checker-lin/_test/run_test",
+            "args": ["9"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/checker-lin/_test",
+            "environment": [
+                { "name": "LD_LIBRARY_PATH", "value": "${workspaceFolder}/checker-lin" }
+            ],
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "externalConsole": false,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

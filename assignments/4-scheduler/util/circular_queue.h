@@ -1,4 +1,8 @@
+#ifndef TYPES
 #include "types.h"
+#endif
+
+#define CQUEUE
 
 void init_queue(C_Queue* q);
 
