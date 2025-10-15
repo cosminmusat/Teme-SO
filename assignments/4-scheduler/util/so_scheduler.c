@@ -98,9 +98,32 @@ void* thread_function(void* arg) {
     fprintf(stderr, "Log: Initialized thread struct fields; tid: %lx, work done: %d\n", tr->tid, tr->work_done);
 
     fprintf(stderr, "Log: Entering thread function - thread %lx!\n", pthread_self());
+    wait_to_run();
     tr->func(priority);
     fprintf(stderr, "Log: Exited thread function - thread %lx!\n", pthread_self());
     tr->work_done = 1;
+
+    fprintf(stderr, "Log: Entering check scheduler function - thread %lx\n", pthread_self());
+    check_scheduler();
+    fprintf(stderr, "Log: Exited check scheduler function - thread %lx\n", pthread_self());
+
+    fprintf(stderr, "Log: Entering preempted function - thread %lx\n", pthread_self());
+    if (preempted()) {
+        fprintf(stderr, "Log: Exiting preempted function; status preempted - thread %lx\n", pthread_self());
+        // signal so new running thread can run
+        // if not preempted, no reason to signal since this is running thread
+
+        fprintf(stderr, "Log: Trying to get lock to broadcast all waiting threads - thread %lx\n", pthread_self());
+        pthread_mutex_lock(&sch_mutex);
+        fprintf(stderr, "Log: Got lock to broadcast all waiting threads - thread %lx\n", pthread_self());
+        pthread_cond_broadcast(&is_running_thread);
+        fprintf(stderr, "Log: Broadcasted all waiting threads - thread %lx\n", pthread_self());
+        fprintf(stderr, "Log: Renouncing lock to broadcast waiting threads - thread %lx\n", pthread_self());
+        pthread_mutex_unlock(&sch_mutex);
+        fprintf(stderr, "Log: Renounced lock to broadcast waiting threads - thread %lx\n", pthread_self());
+    }
+    fprintf(stderr, "Log: Exiting preempted function; status NOT preempted - thread %lx\n", pthread_self());
+
 
     fprintf(stderr, tr->work_done == 1 ? "Log: Work done - thread %lx\n" : "Err: Work not done - thread %lx\n", pthread_self());
 
@@ -109,7 +132,7 @@ void* thread_function(void* arg) {
     fprintf(stderr, "Log: Got lock to add thread to terminated - thread %lx\n", pthread_self());
     fprintf(stderr, "Log: Adding thread to terminated - thread %lx\n", pthread_self());
     sch->terminated_threads[sch->no_terminated_threads++] = tr;
-    fprintf(stderr, sch->terminated_threads[sch->no_terminated_threads] == tr 
+    fprintf(stderr, sch->terminated_threads[sch->no_terminated_threads - 1] == tr 
         ? "Log: Added thread to terminated - thread %lx\n" : "Err: Didn't add thread to termianted - thread %lx", pthread_self());
     fprintf(stderr, "Log: Signaling main thread to try to join - thread %lx\n", pthread_self());
     pthread_cond_signal(&all_threads_terminated);
@@ -128,25 +151,31 @@ void check_scheduler() {
     fprintf(stderr, "Log: Got mutex in scheduler - thread %lx\n", pthread_self());
     thread* curr = sch->running_thread;
     fprintf(stderr, "Log: Running thread is %lx\n", sch->running_thread->tid);
-    if (curr->time_quantum == 0) {
+    if (curr->time_quantum == 0 || curr->work_done == 1) {
         fprintf(stderr, "Log: Quantum expired for running thread %lx\n", sch->running_thread->tid);
-        enqueue(&sch->ready_queues[curr->priority], curr);
+        if (main_thread->tid != curr->tid && curr->work_done == 0) {
+            enqueue(&sch->ready_queues[curr->priority], curr);
+        }
         fprintf(stderr, "Log: Enqueue thread %lx in scheduler\n", sch->running_thread->tid);
         curr = NULL;
     }
 
     thread* next = NULL;
     for (int i = SO_MAX_PRIO; i >= 0; --i) {
-        thread* tr = dequeue(&sch->ready_queues[i]);
+        thread* tr = front(&sch->ready_queues[i]);
         if (tr != NULL) {
             if (curr == NULL || main_thread_running == 1) {
+                dequeue(&sch->ready_queues[i]);
                 main_thread_running = 0;
                 next = tr;
                 break;
             }
             else {
                 if (tr->priority > curr->priority) {
-                    enqueue(&sch->ready_queues[curr->priority], curr);
+                    dequeue(&sch->ready_queues[i]);
+                    if (curr->work_done == 0) {
+                        enqueue(&sch->ready_queues[curr->priority], curr);
+                    }
                     next = tr;
                     break;
                 }
@@ -245,6 +274,8 @@ DECL_PREFIX tid_t so_fork(so_handler *func, unsigned int priority) {
     tr->time_quantum = sch->time_quantum;
     tr->priority = priority;
     tr->func = func;
+    tr->work_done = 0;
+    tr->tid = 0;
 
     fprintf(stderr, "Log: Initialized struct; time quantum: %u, priority %u, func addr: %x - thread %lx\n",
         tr->time_quantum, tr->priority, tr->func, pthread_self());
@@ -386,5 +417,7 @@ DECL_PREFIX void so_end(void) {
     pthread_cond_destroy(&all_threads_terminated);
     pthread_cond_destroy(&is_running_thread);
 
+    fprintf(stderr, "Log: MAIN THREAD EXITING\n");
+    fflush(stderr);
     return;
 }
