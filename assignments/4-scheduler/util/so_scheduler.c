@@ -1,12 +1,14 @@
-#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "types.h"
 #include "circular_queue.h"
 
 static scheduler* sch = NULL;
 static pthread_mutex_t sch_mutex;
-static pthread_cond_t all_threads_terminated;
 static pthread_cond_t is_running_thread;
+static sem_t not_terminated_threads;
+static sem_t all_threads_terminated;
 static int main_thread_running = 0;
 static thread* main_thread;
 
@@ -49,8 +51,9 @@ DECL_PREFIX int so_init(unsigned int time_quantum, unsigned int io) {
     }
 
     pthread_mutex_init(&sch_mutex, NULL);
-    pthread_cond_init(&all_threads_terminated, NULL);
     pthread_cond_init(&is_running_thread, NULL);
+    sem_init(&not_terminated_threads, 0, 0);
+    sem_init(&all_threads_terminated, 0, 0);
 
     return 0;
 }
@@ -59,11 +62,11 @@ void* thread_function(void* arg) {
 
     thread* tr = (thread*)arg;
     unsigned int priority = tr->priority;
-    // assign tid before trying to run
+    // assign tid before waiting to run
     tr->tid = pthread_self();
-    tr->work_done = 0;
 
     wait_to_run();
+    tr->work_done = 0;
     tr->func(priority);
     tr->work_done = 1;
 
@@ -79,8 +82,14 @@ void* thread_function(void* arg) {
 
     pthread_mutex_lock(&sch_mutex);
     sch->terminated_threads[sch->no_terminated_threads++] = tr;
-    pthread_cond_signal(&all_threads_terminated);
     pthread_mutex_unlock(&sch_mutex);
+
+    sem_wait(&not_terminated_threads);
+    int no_not_terminated;
+    sem_getvalue(&not_terminated_threads, &no_not_terminated);
+    if (no_not_terminated == 0) {
+        sem_post(&all_threads_terminated);
+    }
 
     return NULL;
 }
@@ -182,6 +191,7 @@ DECL_PREFIX tid_t so_fork(so_handler *func, unsigned int priority) {
     pthread_mutex_lock(&sch_mutex);
     sch->no_threads++;
     pthread_mutex_unlock(&sch_mutex);
+    sem_post(&not_terminated_threads);
 
     pthread_create(&ptr, NULL, thread_function, tr);
     // end do work
@@ -298,11 +308,11 @@ DECL_PREFIX void so_end(void) {
         return;
     }
     
-    pthread_mutex_lock(&sch_mutex);
-    while (sch->no_threads - sch->no_terminated_threads > 0) {
-        pthread_cond_wait(&all_threads_terminated, &sch_mutex);
+    int no_not_terminated;
+    sem_getvalue(&not_terminated_threads, &no_not_terminated);
+    if (no_not_terminated != 0) {
+        sem_wait(&all_threads_terminated);
     }
-    pthread_mutex_unlock(&sch_mutex);
 
     for (unsigned int i = 0; i < sch->no_threads; i++) {
         pthread_join(sch->terminated_threads[i]->tid, NULL);
@@ -314,8 +324,9 @@ DECL_PREFIX void so_end(void) {
     sch = NULL;
 
     pthread_mutex_destroy(&sch_mutex);
-    pthread_cond_destroy(&all_threads_terminated);
     pthread_cond_destroy(&is_running_thread);
+    sem_destroy(&not_terminated_threads);
+    sem_destroy(&all_threads_terminated);
 
     return;
 }
