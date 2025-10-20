@@ -7,7 +7,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/checker-lin/_test/run_test",
-            "args": ["9"],
+            "args": ["20"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/checker-lin/_test",
             "environment": [

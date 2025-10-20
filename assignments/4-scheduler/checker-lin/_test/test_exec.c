@@ -75,15 +75,15 @@ static tid_t test_tid_13_2;
 
 static void test_sched_handler_13_2(unsigned int dummy)
 {
-	// SO_TEST_AND_SET(test_tid_13_1, test_tid_13_2);
+	SO_TEST_AND_SET(test_tid_13_1, test_tid_13_2);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_13_2, test_tid_13_2);
+	SO_TEST_AND_SET(test_tid_13_2, test_tid_13_2);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_13_1, test_tid_13_2);
+	SO_TEST_AND_SET(test_tid_13_1, test_tid_13_2);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_13_2, test_tid_13_2);
+	SO_TEST_AND_SET(test_tid_13_2, test_tid_13_2);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_13_1, test_tid_13_2);
+	SO_TEST_AND_SET(test_tid_13_1, test_tid_13_2);
 	so_exec();
 	test_exec_status = SO_TEST_SUCCESS;
 }
@@ -97,13 +97,13 @@ static void test_sched_handler_13_1(unsigned int dummy)
 	sched_yield();
 
 	/* I should continue running */
-	// SO_TEST_AND_SET(test_tid_13_1, test_tid_13_1);
+	SO_TEST_AND_SET(test_tid_13_1, test_tid_13_1);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_13_2, test_tid_13_1);
+	SO_TEST_AND_SET(test_tid_13_2, test_tid_13_1);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_13_1, test_tid_13_1);
+	SO_TEST_AND_SET(test_tid_13_1, test_tid_13_1);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_13_2, test_tid_13_1);
+	SO_TEST_AND_SET(test_tid_13_2, test_tid_13_1);
 	so_exec();
 
 	/* make sure nobody changed it until now */
@@ -139,27 +139,27 @@ static tid_t test_tid_14_4;
 
 static void test_sched_handler_14_4(unsigned int dummy)
 {
-	// SO_TEST_AND_SET(test_tid_14_3, test_tid_14_4);
+	SO_TEST_AND_SET(test_tid_14_3, test_tid_14_4);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_4, test_tid_14_4);
+	SO_TEST_AND_SET(test_tid_14_4, test_tid_14_4);
 
 	test_exec_status = SO_TEST_FAIL;
 }
 
 static void test_sched_handler_14_3(unsigned int dummy)
 {
-	// SO_TEST_AND_SET(test_tid_14_2, test_tid_14_3);
+	SO_TEST_AND_SET(test_tid_14_2, test_tid_14_3);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
+	SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
+	SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
+	SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
 	so_exec();
 	/* should be preempted here */
-	// SO_TEST_AND_SET(test_tid_14_1, test_tid_14_3);
+	SO_TEST_AND_SET(test_tid_14_1, test_tid_14_3);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
+	SO_TEST_AND_SET(test_tid_14_3, test_tid_14_3);
 
 	/* done scheduling */
 	test_exec_status = SO_TEST_SUCCESS;
@@ -167,11 +167,11 @@ static void test_sched_handler_14_3(unsigned int dummy)
 
 static void test_sched_handler_14_2(unsigned int dummy)
 {
-	// SO_TEST_AND_SET(test_tid_14_1, test_tid_14_2);
+	SO_TEST_AND_SET(test_tid_14_1, test_tid_14_2);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_2, test_tid_14_2);
+	SO_TEST_AND_SET(test_tid_14_2, test_tid_14_2);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_2, test_tid_14_2);
+	SO_TEST_AND_SET(test_tid_14_2, test_tid_14_2);
 
 	/* leaving - thread 3 should start */
 	test_exec_status = SO_TEST_FAIL;
@@ -185,23 +185,23 @@ static void test_sched_handler_14_1(unsigned int dummy)
 	sched_yield();
 
 	/* I should continue running */
-	// SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
+	SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
 	test_tid_14_3 = so_fork(test_sched_handler_14_3, 0);
 	sched_yield();
 
 	/* I should continue running */
-	// SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
+	SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
 	test_tid_14_4 = so_fork(test_sched_handler_14_4, 0);
 	sched_yield();
 
 	/* still me */
-	// SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
+	SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
 	so_exec();
 
 	/* should be preempted here */
-	// SO_TEST_AND_SET(test_tid_14_4, test_tid_14_1);
+	SO_TEST_AND_SET(test_tid_14_4, test_tid_14_1);
 	so_exec();
-	// SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
+	SO_TEST_AND_SET(test_tid_14_1, test_tid_14_1);
 
 	/* leaving - make sure the others execute successfully */
 	test_exec_status = SO_TEST_FAIL;

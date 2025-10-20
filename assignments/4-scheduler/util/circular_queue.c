@@ -1,13 +1,7 @@
 // C Program to implement the circular queue in c using arrays
 #include <stdio.h>
-
-#ifndef TYPES
 #include "types.h"
-#endif
-
-#ifndef CQUEUE
 #include "circular_queue.h"
-#endif
 
 void init_queue(C_Queue* q)
 {

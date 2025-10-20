@@ -324,9 +324,6 @@ test:
 	so_end();
 
 	basic_test(test_sched_fork_handler_runs == test_sched_fork_runs);
-
-	fprintf(stderr, "handler runs: %u, forks: %u\n",
-		test_sched_fork_handler_runs, test_sched_fork_runs);
 }
 
 /*
