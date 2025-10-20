@@ -12,6 +12,12 @@ static sem_t all_threads_terminated;
 static int main_thread_running = 0;
 static thread* main_thread;
 
+void* thread_function(void* arg);
+void  check_scheduler(void);
+void  wait_to_run(void);
+void  decrease_quantum(void);
+int   preempted(void);
+
 DECL_PREFIX int so_init(unsigned int time_quantum, unsigned int io) {
     if (time_quantum == 0) {
         return -1;
@@ -42,11 +48,11 @@ DECL_PREFIX int so_init(unsigned int time_quantum, unsigned int io) {
     sch->running_thread->tid = pthread_self();
     main_thread_running = 1;
 
-    for (int i = 0; i <= SO_MAX_PRIO; i++) {
+    for (int i = 0; i <= SO_MAX_PRIO; ++i) {
         init_queue(&sch->ready_queues[i]);
     }
 
-    for (int i = 0; i < SO_MAX_NUM_EVENTS; i++) {
+    for (int i = 0; i < SO_MAX_NUM_EVENTS; ++i) {
         init_queue(&sch->waiting_queues[i]);
     }
 
@@ -263,10 +269,10 @@ DECL_PREFIX int so_signal(unsigned int io) {
             break;
         }
         tr->waiting = 0;
-        threads_signaled++;
+        ++threads_signaled;
         enqueue(&sch->ready_queues[tr->priority], tr);
     } while(1);
-    init_queue(&sch->waiting_queues[io]);
+
     pthread_mutex_unlock(&sch_mutex);
     // end do work
 
@@ -314,7 +320,7 @@ DECL_PREFIX void so_end(void) {
         sem_wait(&all_threads_terminated);
     }
 
-    for (unsigned int i = 0; i < sch->no_threads; i++) {
+    for (unsigned int i = 0; i < sch->no_threads; ++i) {
         pthread_join(sch->terminated_threads[i]->tid, NULL);
         free(sch->terminated_threads[i]);
     }
